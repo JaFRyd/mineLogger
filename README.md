@@ -15,7 +15,30 @@ database — nothing is sent to any external service.
 
 ---
 
-## Requirements
+## Windows Installer (recommended for Windows users)
+
+Download and run `minelogger-setup.exe`. The installer:
+
+- Installs mineLogger to `C:\Program Files\mineLogger\` (or your AppData if you
+  choose the per-user option in the installer dialog)
+- Creates a Start Menu shortcut
+- Optionally registers the server to start silently at login (checkbox is ticked by
+  default — uncheck if you prefer to start it manually)
+
+No Python installation is required. Everything is bundled.
+
+After installation, use the Start Menu shortcut or navigate to
+`http://localhost:5000` in your browser. If autostart is enabled, the server will
+be running automatically after each login.
+
+**Uninstalling** via *Add or Remove Programs* removes the application and the
+autostart entry. Your data (`~/.minelogger/minelogger.db`) is not touched.
+
+---
+
+## From source
+
+### Requirements
 
 - Python 3.8 or newer
 - pip
@@ -25,9 +48,7 @@ No external database or web server is required. The web UI runs a local
 (`localhost:5000` by default). It is not exposed to the network and is intended
 for single-user local use only.
 
----
-
-## Installation
+### Setup
 
 ```bash
 # Clone the repo
@@ -93,9 +114,10 @@ python main.py export --output february.csv --from 2026-02-01 --to 2026-02-28
 
 ---
 
-## Autostart on Windows
+## Autostart on Windows (from-source installs)
 
-Two options to have the Flask server start automatically when you log in.
+If you installed via the Windows Installer, autostart is handled for you. The
+following applies only to from-source setups.
 
 ### Option A — Startup folder (simplest)
 
@@ -138,6 +160,20 @@ To stop or disable the server, right-click the task and choose **End** or **Disa
 
 > **Note:** Both options start the server without opening the browser automatically.
 > Just navigate to `http://localhost:5000` yourself after login.
+
+---
+
+## Building the Windows Installer
+
+Requires [PyInstaller](https://pyinstaller.org/) and
+[Inno Setup 6](https://jrsoftware.org/isinfo.php) installed on the build machine.
+
+```bat
+pip install pyinstaller
+build.bat 1.0.0
+```
+
+The installer is written to `installer_output\minelogger-setup.exe`.
 
 ---
 

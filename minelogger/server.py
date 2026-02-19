@@ -5,7 +5,12 @@ from .export import generate_csv
 
 
 def create_app():
-    app = Flask(__name__, template_folder="templates")
+    import os, sys
+    if getattr(sys, "frozen", False):
+        template_dir = os.path.join(sys._MEIPASS, "minelogger", "templates")
+    else:
+        template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+    app = Flask(__name__, template_folder=template_dir)
     app.secret_key = "minelogger-secret"
 
     db.init_db()

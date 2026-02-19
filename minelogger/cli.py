@@ -98,20 +98,19 @@ def export(date_from, date_to, customer, output):
 
 @cli.command()
 @click.option("--port", default=5000, show_default=True, help="Port to listen on")
-def ui(port):
+@click.option("--no-browser", "no_browser", is_flag=True, default=False,
+              help="Start server without opening the browser (used for autostart).")
+def ui(port, no_browser):
     """Start the web UI."""
-    import webbrowser
-    import threading
+    import webbrowser, threading
     from .server import create_app
-
     app = create_app()
     url = f"http://localhost:{port}"
-
-    def open_browser():
-        import time
-        time.sleep(1.5)
-        webbrowser.open_new_tab(url)
-
-    threading.Thread(target=open_browser).start()
+    if not no_browser:
+        def open_browser():
+            import time
+            time.sleep(1.5)
+            webbrowser.open_new_tab(url)
+        threading.Thread(target=open_browser, daemon=True).start()
     click.echo(f"Starting web UI at {url} — press Ctrl+C to stop")
     app.run(port=port, debug=False)
