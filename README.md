@@ -93,6 +93,54 @@ python main.py export --output february.csv --from 2026-02-01 --to 2026-02-28
 
 ---
 
+## Autostart on Windows
+
+Two options to have the Flask server start automatically when you log in.
+
+### Option A — Startup folder (simplest)
+
+1. Create a file called `start-minelogger.vbs` anywhere convenient (e.g. the repo
+   folder) with the following content — adjust the path to match your installation:
+
+   ```vbscript
+   Set WshShell = CreateObject("WScript.Shell")
+   WshShell.Run "cmd /c ""C:\Users\janne\Coding\mineLogger\.venv\Scripts\python.exe"" ""C:\Users\janne\Coding\mineLogger\main.py"" ui", 0, False
+   ```
+
+   The `0` as the third argument hides the console window so no terminal appears.
+
+2. Press `Win + R`, type `shell:startup`, press Enter.
+
+3. Place a shortcut to `start-minelogger.vbs` in the folder that opens.
+
+The server will start silently at next login. To stop it, open Task Manager and
+end the `python.exe` process.
+
+### Option B — Task Scheduler (more control)
+
+Task Scheduler lets you run the server at login, restart it on failure, and manage
+it without touching startup folders.
+
+1. Open **Task Scheduler** (search in Start menu).
+2. Click **Create Basic Task** in the right panel.
+3. Fill in the wizard:
+   - **Name:** mineLogger
+   - **Trigger:** When I log on
+   - **Action:** Start a program
+     - **Program:** `C:\Users\janne\Coding\mineLogger\.venv\Scripts\python.exe`
+     - **Arguments:** `main.py ui`
+     - **Start in:** `C:\Users\janne\Coding\mineLogger`
+4. Finish the wizard.
+5. Find the task in the list, open its **Properties**, go to the **General** tab,
+   and tick **Run only when user is logged on** and **Hidden**.
+
+To stop or disable the server, right-click the task and choose **End** or **Disable**.
+
+> **Note:** Both options start the server without opening the browser automatically.
+> Just navigate to `http://localhost:5000` yourself after login.
+
+---
+
 ## Data storage
 
 Entries are stored in a local SQLite database at:
