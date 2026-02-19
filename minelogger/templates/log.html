@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0">View Log</h2>
+
+  <form method="get" action="/log">
+    <div class="filter-bar">
+      <div class="form-row">
+        <label for="date_from">From</label>
+        <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+      </div>
+      <div class="form-row">
+        <label for="date_to">To</label>
+        <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+      </div>
+      <div class="form-row">
+        <label for="customer">Customer</label>
+        <select id="customer" name="customer">
+          <option value="">All customers</option>
+          {% for c in customers %}
+            <option value="{{ c }}" {% if c == selected_customer %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label>&nbsp;</label>
+        <button type="submit">Filter</button>
+      </div>
+      {% if date_from or date_to or selected_customer %}
+      <div class="form-row">
+        <label>&nbsp;</label>
+        <a href="/log" class="btn">Clear</a>
+      </div>
+      {% endif %}
+    </div>
+  </form>
+
+  {% if entries %}
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Customer</th>
+        <th>Hours</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td>{{ e.date }}</td>
+        <td>{{ e.customer }}</td>
+        <td class="hours-col">{{ "%.2f"|format(e.hours) }}h</td>
+        <td>{{ e.description }}</td>
+        <td>
+          <form method="post" action="/entry/{{ e.id }}/delete" style="margin:0"
+                onsubmit="return confirm('Delete this entry?')">
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="2">Total</td>
+        <td class="hours-col">{{ "%.2f"|format(total) }}h</td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+  {% else %}
+  <p style="color:#888">No entries found.</p>
+  {% endif %}
+</div>
+{% endblock %}

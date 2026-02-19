@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0">Export to CSV</h2>
+  <form method="post" action="/export">
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="date_from">From date</label>
+        <input type="date" id="date_from" name="date_from">
+      </div>
+      <div class="form-row">
+        <label for="date_to">To date</label>
+        <input type="date" id="date_to" name="date_to">
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="customer">Customer (optional)</label>
+      <select id="customer" name="customer">
+        <option value="">All customers</option>
+        {% for c in customers %}
+          <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="filename">Output filename</label>
+      <input type="text" id="filename" name="filename" value="export" placeholder="export">
+    </div>
+    <button type="submit">Download CSV</button>
+  </form>
+</div>
+{% endblock %}
