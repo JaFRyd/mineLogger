@@ -11,6 +11,7 @@ Compression=lzma2
 SolidCompression=yes
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
+UsedUserAreasWarning=no
 DisableProgramGroupPage=yes
 ; User data (~/.minelogger/) is never touched by the installer or uninstaller
 
