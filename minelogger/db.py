@@ -25,6 +25,13 @@ def init_db():
                 created_at  TEXT    NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS customers (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                name       TEXT    NOT NULL UNIQUE,
+                created_at TEXT    NOT NULL
+            )
+        """)
 
 
 def add_entry(date_str, customer, hours, description):
@@ -64,3 +71,25 @@ def get_customers():
 def delete_entry(entry_id):
     with _connect() as conn:
         conn.execute("DELETE FROM entries WHERE id = ?", (entry_id,))
+
+
+def get_managed_customers():
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT name FROM customers ORDER BY name ASC"
+        ).fetchall()
+        return [row["name"] for row in rows]
+
+
+def add_customer(name):
+    created_at = datetime.now().isoformat(timespec="seconds")
+    with _connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO customers (name, created_at) VALUES (?, ?)",
+            (name, created_at),
+        )
+
+
+def remove_customer(name):
+    with _connect() as conn:
+        conn.execute("DELETE FROM customers WHERE name = ?", (name,))

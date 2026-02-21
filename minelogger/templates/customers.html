@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0">Customers</h2>
+  <p style="margin-top:0;color:#555;font-size:0.9rem">
+    Manage the customer list used for preselection on the Add Entry page.
+    Removing a customer here does not affect any log entries.
+  </p>
+
+  <form method="post" action="/customers" style="display:flex;gap:0.5rem;margin-bottom:1.5rem">
+    <input type="text" name="name" placeholder="New customer name" required
+           style="max-width:320px">
+    <button type="submit">Add</button>
+  </form>
+
+  {% if customers %}
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th style="width:6rem"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td>{{ c }}</td>
+          <td>
+            <form method="post" action="/customers/{{ c | urlencode }}/delete"
+                  onsubmit="return confirm('Remove {{ c }} from preselection?')">
+              <button type="submit" class="btn btn-danger">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="color:#888;font-size:0.9rem">No customers yet. Add one above.</p>
+  {% endif %}
+</div>
+{% endblock %}

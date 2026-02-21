@@ -47,7 +47,7 @@ def create_app():
                 flash("Entry added.", "success")
                 return redirect(url_for("add_entry"))
 
-        customers = db.get_customers()
+        customers = db.get_managed_customers()
         today = date.today().isoformat()
         return render_template("add.html", customers=customers, today=today, active="add")
 
@@ -89,6 +89,25 @@ def create_app():
             return response
 
         return render_template("export.html", customers=customers, active="export")
+
+    @app.route("/customers", methods=["GET", "POST"])
+    def manage_customers():
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            if name:
+                db.add_customer(name)
+                flash(f'Customer "{name}" added.', "success")
+            else:
+                flash("Customer name cannot be empty.", "error")
+            return redirect(url_for("manage_customers"))
+        customers = db.get_managed_customers()
+        return render_template("customers.html", customers=customers, active="customers")
+
+    @app.route("/customers/<path:name>/delete", methods=["POST"])
+    def delete_customer(name):
+        db.remove_customer(name)
+        flash(f'Customer "{name}" removed from preselection.', "success")
+        return redirect(url_for("manage_customers"))
 
     @app.route("/entry/<int:entry_id>/delete", methods=["POST"])
     def delete_entry(entry_id):
