@@ -14,6 +14,7 @@ env/
 dist/
 build/
 *.egg-info/
+installer_output/
 
 # Database
 *.db
