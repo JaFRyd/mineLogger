@@ -3,7 +3,67 @@
 <div class="card">
   <h2 style="margin-top:0">View Log</h2>
 
+  <!-- Monthly Summary -->
+  <div style="margin-bottom:1.5rem">
+    <form method="get" action="/log" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem">
+      <label style="margin:0;font-size:0.85rem;font-weight:600;white-space:nowrap">Monthly Summary</label>
+      <select name="month" onchange="this.form.submit()" style="max-width:200px;font-size:0.85rem;padding:0.35rem 0.5rem">
+        <option value="">— select month —</option>
+        {% for m in months %}
+          <option value="{{ m.value }}" {% if m.value == selected_month %}selected{% endif %}>{{ m.label }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_month %}
+        <a href="/log" class="btn" style="font-size:0.85rem;padding:0.35rem 0.7rem">Clear</a>
+      {% endif %}
+    </form>
+
+    {% if summary %}
+    {% set ns = namespace(total=0) %}
+    {% for row in summary %}{% set ns.total = ns.total + row.hours %}{% endfor %}
+    <table style="max-width:380px;margin-bottom:0.25rem">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th style="text-align:right">Hours</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary %}
+        <tr {% if row.customer == selected_customer %}style="background:#ebf2ff"{% endif %}>
+          <td>
+            {% if row.customer == selected_customer %}
+              <a href="/log?month={{ selected_month }}" style="color:#c0392b;text-decoration:none">
+                {{ row.customer }} &times;
+              </a>
+            {% else %}
+              <a href="/log?month={{ selected_month }}&customer={{ row.customer | urlencode }}"
+                 style="color:#1a1a2e;text-decoration:none">
+                {{ row.customer }}
+              </a>
+            {% endif %}
+          </td>
+          <td style="text-align:right" class="hours-col">{{ "%.2f"|format(row.hours) }}h</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td>Total</td>
+          <td style="text-align:right" class="hours-col">{{ "%.2f"|format(ns.total) }}h</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% elif selected_month %}
+    <p style="color:#888;font-size:0.9rem">No entries for this month.</p>
+    {% endif %}
+  </div>
+
+  {% if summary %}<hr style="border:none;border-top:1px solid #e8e8e8;margin:0 0 1.5rem">{% endif %}
+
+  <!-- Filter bar -->
   <form method="get" action="/log">
+    {% if selected_month %}<input type="hidden" name="month" value="{{ selected_month }}">{% endif %}
     <div class="filter-bar">
       <div class="form-row">
         <label for="date_from">From</label>
@@ -29,7 +89,7 @@
       {% if date_from or date_to or selected_customer %}
       <div class="form-row">
         <label>&nbsp;</label>
-        <a href="/log" class="btn">Clear</a>
+        <a href="/log{% if selected_month %}?month={{ selected_month }}{% endif %}" class="btn">Clear</a>
       </div>
       {% endif %}
     </div>

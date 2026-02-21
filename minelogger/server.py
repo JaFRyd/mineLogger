@@ -53,12 +53,24 @@ def create_app():
 
     @app.route("/log")
     def view_log():
+        import calendar
+        month = request.args.get("month") or None
         date_from = request.args.get("date_from") or None
         date_to = request.args.get("date_to") or None
         customer = request.args.get("customer") or None
+
+        # When a month is selected and no explicit date range, derive it
+        if month and not date_from and not date_to:
+            year, mon = int(month.split("-")[0]), int(month.split("-")[1])
+            date_from = f"{year:04d}-{mon:02d}-01"
+            last_day = calendar.monthrange(year, mon)[1]
+            date_to = f"{year:04d}-{mon:02d}-{last_day:02d}"
+
         entries = db.get_entries(date_from=date_from, date_to=date_to, customer=customer)
         customers = db.get_customers()
         total = sum(e["hours"] for e in entries)
+        months = db.get_months()
+        summary = db.get_monthly_summary(month) if month else []
         return render_template(
             "log.html",
             entries=entries,
@@ -68,6 +80,9 @@ def create_app():
             date_to=date_to or "",
             selected_customer=customer or "",
             active="log",
+            months=months,
+            selected_month=month or "",
+            summary=summary,
         )
 
     @app.route("/export", methods=["GET", "POST"])

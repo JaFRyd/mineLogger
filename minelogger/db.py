@@ -73,6 +73,37 @@ def delete_entry(entry_id):
         conn.execute("DELETE FROM entries WHERE id = ?", (entry_id,))
 
 
+def get_months():
+    """Return distinct months that have entries, newest first."""
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT DISTINCT substr(date, 1, 7) AS month FROM entries ORDER BY month DESC"
+        ).fetchall()
+    result = []
+    for row in rows:
+        value = row["month"]
+        year, mon = value.split("-")
+        label = date(int(year), int(mon), 1).strftime("%B %Y")
+        result.append({"value": value, "label": label})
+    return result
+
+
+def get_monthly_summary(year_month):
+    """Return total hours per customer for a given YYYY-MM."""
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT customer, SUM(hours) AS total_hours
+            FROM entries
+            WHERE substr(date, 1, 7) = ?
+            GROUP BY customer
+            ORDER BY customer ASC
+            """,
+            (year_month,),
+        ).fetchall()
+    return [{"customer": row["customer"], "hours": row["total_hours"]} for row in rows]
+
+
 def get_managed_customers():
     with _connect() as conn:
         rows = conn.execute(
