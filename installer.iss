@@ -24,9 +24,10 @@ Name: "autostart"; Description: "Start mineLogger automatically at Windows login
 [Files]
 Source: "dist\minelogger\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "start-silent.vbs"; DestDir: "{app}"; Flags: ignoreversion
+Source: "start-ui.vbs"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\mineLogger"; Filename: "{app}\minelogger.exe"; Parameters: "ui"; Comment: "Open mineLogger web UI"
+Name: "{group}\mineLogger"; Filename: "wscript.exe"; Parameters: """{app}\start-ui.vbs"""; WorkingDir: "{app}"; Comment: "Open mineLogger web UI"
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "mineLogger"; ValueData: "wscript.exe ""{app}\start-silent.vbs"""; Flags: uninsdeletevalue; Tasks: autostart

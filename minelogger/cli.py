@@ -102,8 +102,20 @@ def export(date_from, date_to, customer, output):
               help="Start server without opening the browser (used for autostart).")
 def ui(port, no_browser):
     """Start the web UI."""
-    import webbrowser, threading
+    import logging, webbrowser, threading
+    from pathlib import Path
     from .server import create_app
+
+    # File logging — always write to ~/.minelogger/minelogger-server.log
+    log_path = Path.home() / ".minelogger" / "minelogger-server.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    handler = logging.FileHandler(str(log_path), encoding="utf-8")
+    handler.setFormatter(logging.Formatter(
+        "%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    ))
+    logging.getLogger("werkzeug").addHandler(handler)
+    logging.getLogger("werkzeug").setLevel(logging.INFO)
+
     app = create_app()
     url = f"http://localhost:{port}"
     if not no_browser:

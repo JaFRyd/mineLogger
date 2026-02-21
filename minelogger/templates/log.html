@@ -114,11 +114,10 @@
         <td class="hours-col">{{ "%.2f"|format(e.hours) }}h</td>
         <td>{{ e.description }}</td>
         <td style="white-space:nowrap">
-          <a href="/entry/{{ e.id }}/edit" class="btn"
-             style="font-size:0.8rem;padding:0.3rem 0.6rem;margin-right:0.3rem">Edit</a>
+          <a href="/entry/{{ e.id }}/edit" class="btn btn-sm" style="margin-right:0.3rem">Edit</a>
           <form method="post" action="/entry/{{ e.id }}/delete" style="margin:0;display:inline"
                 onsubmit="return confirm('Delete this entry?')">
-            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
           </form>
         </td>
       </tr>
