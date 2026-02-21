@@ -68,6 +68,20 @@ def get_customers():
         return [row["customer"] for row in rows]
 
 
+def get_entry(entry_id):
+    with _connect() as conn:
+        row = conn.execute("SELECT * FROM entries WHERE id = ?", (entry_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def update_entry(entry_id, date_str, customer, hours, description):
+    with _connect() as conn:
+        conn.execute(
+            "UPDATE entries SET date=?, customer=?, hours=?, description=? WHERE id=?",
+            (date_str, customer, float(hours), description, entry_id),
+        )
+
+
 def delete_entry(entry_id):
     with _connect() as conn:
         conn.execute("DELETE FROM entries WHERE id = ?", (entry_id,))

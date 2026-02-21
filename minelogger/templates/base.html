@@ -72,6 +72,7 @@
     .form-row { margin-bottom: 1rem; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     button[type=submit], .btn {
+      display: inline-block;
       background: #1a1a2e;
       color: #fff;
       border: none;
@@ -79,6 +80,8 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 0.95rem;
+      text-decoration: none;
+      box-sizing: border-box;
     }
     button[type=submit]:hover, .btn:hover { background: #16213e; }
     .btn-danger {

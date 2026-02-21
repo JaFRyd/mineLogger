@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0">Edit Entry</h2>
+  <form method="post" action="/entry/{{ entry.id }}/edit">
+    <input type="hidden" name="referrer" value="{{ request.referrer or '' }}">
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" value="{{ entry.date }}" required>
+      </div>
+      <div class="form-row">
+        <label for="hours">Hours</label>
+        <input type="number" id="hours" name="hours" step="0.25" min="0.25"
+               value="{{ entry.hours }}" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="customer">Customer</label>
+      <input type="text" id="customer" name="customer" list="customers-list"
+             autocomplete="off" value="{{ entry.customer }}" required>
+      <datalist id="customers-list">
+        {% for c in customers %}
+          <option value="{{ c }}">
+        {% endfor %}
+      </datalist>
+    </div>
+    <div class="form-row">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="3" required>{{ entry.description }}</textarea>
+    </div>
+    <button type="submit">Save Changes</button>
+    <a href="{{ request.referrer or '/log' }}" class="btn"
+       style="background:#888;margin-left:0.5rem">Cancel</a>
+  </form>
+</div>
+{% endblock %}

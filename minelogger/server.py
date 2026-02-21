@@ -148,6 +148,42 @@ def create_app():
         flash(f'Customer "{name}" removed from preselection.', "success")
         return redirect(url_for("manage_customers"))
 
+    @app.route("/entry/<int:entry_id>/edit", methods=["GET", "POST"])
+    def edit_entry(entry_id):
+        entry = db.get_entry(entry_id)
+        if entry is None:
+            flash("Entry not found.", "error")
+            return redirect(url_for("view_log"))
+        if request.method == "POST":
+            date_str = request.form.get("date", "").strip()
+            customer = request.form.get("customer", "").strip()
+            hours = request.form.get("hours", "")
+            description = request.form.get("description", "").strip()
+            errors = []
+            if not date_str:
+                errors.append("Date is required.")
+            if not customer:
+                errors.append("Customer is required.")
+            if not description:
+                errors.append("Description is required.")
+            try:
+                hours = float(hours)
+                if hours <= 0:
+                    errors.append("Hours must be positive.")
+            except (ValueError, TypeError):
+                errors.append("Hours must be a number.")
+            if errors:
+                for e in errors:
+                    flash(e, "error")
+                customers = db.get_managed_customers()
+                return render_template("edit.html", entry=entry, customers=customers, active="log")
+            db.update_entry(entry_id, date_str, customer, hours, description)
+            flash("Entry updated.", "success")
+            referrer = request.form.get("referrer", "")
+            return redirect(referrer if referrer else url_for("view_log"))
+        customers = db.get_managed_customers()
+        return render_template("edit.html", entry=entry, customers=customers, active="log")
+
     @app.route("/entry/<int:entry_id>/delete", methods=["POST"])
     def delete_entry(entry_id):
         db.delete_entry(entry_id)
