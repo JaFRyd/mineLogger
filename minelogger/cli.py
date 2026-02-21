@@ -97,7 +97,7 @@ def export(date_from, date_to, customer, output):
 
 
 @cli.command()
-@click.option("--port", default=5000, show_default=True, help="Port to listen on")
+@click.option("--port", default=5001, show_default=True, help="Port to listen on")
 @click.option("--no-browser", "no_browser", is_flag=True, default=False,
               help="Start server without opening the browser (used for autostart).")
 def ui(port, no_browser):
