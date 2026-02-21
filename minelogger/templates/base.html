@@ -71,7 +71,7 @@
     }
     .form-row { margin-bottom: 1rem; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    button[type=submit], .btn {
+    .btn {
       display: inline-block;
       background: #1a1a2e;
       color: #fff;
@@ -80,11 +80,13 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 0.95rem;
+      line-height: 1.2;
       text-decoration: none;
       box-sizing: border-box;
+      vertical-align: middle;
     }
-    button[type=submit]:hover, .btn:hover { background: #16213e; }
-    .btn-sm { font-size: 0.8rem; padding: 0.3rem 0.6rem; line-height: 1.4; }
+    .btn:hover { background: #16213e; }
+    .btn-sm { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
     .btn-danger { background: #c0392b; }
     .btn-danger:hover { background: #a93226; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }

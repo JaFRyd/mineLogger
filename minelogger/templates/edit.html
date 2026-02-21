@@ -29,7 +29,7 @@
       <label for="description">Description</label>
       <textarea id="description" name="description" rows="3" required>{{ entry.description }}</textarea>
     </div>
-    <button type="submit">Save Changes</button>
+    <button type="submit" class="btn">Save Changes</button>
     <a href="{{ request.referrer or '/log' }}" class="btn"
        style="background:#888;margin-left:0.5rem">Cancel</a>
   </form>
