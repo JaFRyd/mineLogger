@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response
 from datetime import date
 from . import db
-from .export import generate_csv
+from .export import generate_csv, parse_csv
 
 
 def create_app():
@@ -104,6 +104,30 @@ def create_app():
             return response
 
         return render_template("export.html", customers=customers, active="export")
+
+    @app.route("/import", methods=["POST"])
+    def import_csv():
+        f = request.files.get("csv_file")
+        if not f or not f.filename:
+            flash("Please select a CSV file.", "error")
+            return redirect(url_for("export"))
+        try:
+            text = f.read().decode("utf-8-sig")  # utf-8-sig strips BOM if present
+        except UnicodeDecodeError:
+            flash("File must be UTF-8 encoded.", "error")
+            return redirect(url_for("export"))
+        rows, errors = parse_csv(text)
+        for e in errors:
+            flash(e, "error")
+        if rows:
+            imported, skipped = db.import_entries(rows)
+            if imported:
+                flash(f"Imported {imported} entr{'y' if imported == 1 else 'ies'}.", "success")
+            if skipped:
+                flash(f"Skipped {skipped} duplicate entr{'y' if skipped == 1 else 'ies'}.", "success")
+        elif not errors:
+            flash("The CSV file was empty.", "error")
+        return redirect(url_for("export"))
 
     @app.route("/customers", methods=["GET", "POST"])
     def manage_customers():

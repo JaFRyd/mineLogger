@@ -28,5 +28,20 @@
     </div>
     <button type="submit">Download CSV</button>
   </form>
+
+  <hr style="border:none;border-top:1px solid #e8e8e8;margin:2rem 0">
+
+  <h2 style="margin-top:0">Import from CSV</h2>
+  <p style="margin-top:0;color:#555;font-size:0.9rem">
+    Upload a CSV file exported from mineLogger. Duplicate entries (same date, customer,
+    hours, and description) are skipped automatically.
+  </p>
+  <form method="post" action="/import" enctype="multipart/form-data">
+    <div class="form-row" style="max-width:420px">
+      <label for="csv_file">CSV file</label>
+      <input type="file" id="csv_file" name="csv_file" accept=".csv">
+    </div>
+    <button type="submit">Import</button>
+  </form>
 </div>
 {% endblock %}

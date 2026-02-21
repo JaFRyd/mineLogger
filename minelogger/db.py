@@ -124,3 +124,26 @@ def add_customer(name):
 def remove_customer(name):
     with _connect() as conn:
         conn.execute("DELETE FROM customers WHERE name = ?", (name,))
+
+
+def import_entries(rows):
+    """Insert rows, skipping exact duplicates. Returns (imported, skipped)."""
+    imported = 0
+    skipped = 0
+    with _connect() as conn:
+        for row in rows:
+            exists = conn.execute(
+                """SELECT id FROM entries
+                   WHERE date=? AND customer=? AND hours=? AND description=?""",
+                (row["date"], row["customer"], row["hours"], row["description"]),
+            ).fetchone()
+            if exists:
+                skipped += 1
+            else:
+                created_at = row.get("created_at") or datetime.now().isoformat(timespec="seconds")
+                conn.execute(
+                    "INSERT INTO entries (date, customer, hours, description, created_at) VALUES (?, ?, ?, ?, ?)",
+                    (row["date"], row["customer"], row["hours"], row["description"], created_at),
+                )
+                imported += 1
+    return imported, skipped
