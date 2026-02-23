@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, make_response, jsonify
 from datetime import date
 from . import db
 from .export import generate_csv, parse_csv
+from .ollama import extract_entry, OllamaError
 
 
 def create_app():
@@ -141,6 +142,53 @@ def create_app():
             return redirect(url_for("manage_customers"))
         customers = db.get_managed_customers()
         return render_template("customers.html", customers=customers, active="customers")
+
+    @app.route("/chat")
+    def chat():
+        customers = db.get_managed_customers()
+        today = date.today().isoformat()
+        return render_template("chat.html", customers=customers, today=today, active="chat")
+
+    @app.route("/chat/extract", methods=["POST"])
+    def chat_extract():
+        data = request.get_json(silent=True) or {}
+        message = (data.get("message") or "").strip()
+        if not message:
+            return jsonify({"error": "No message provided."}), 400
+        customers = db.get_managed_customers()
+        try:
+            result = extract_entry(message, customers)
+        except OllamaError as exc:
+            return jsonify({"error": str(exc)}), 502
+        return jsonify(result)
+
+    @app.route("/chat/save", methods=["POST"])
+    def chat_save():
+        data = request.get_json(silent=True) or {}
+        date_str = (data.get("date") or "").strip()
+        customer = (data.get("customer") or "").strip()
+        description = (data.get("description") or "").strip()
+        hours_raw = data.get("hours", "")
+
+        errors = []
+        if not date_str:
+            errors.append("Date is required.")
+        if not customer:
+            errors.append("Customer is required.")
+        if not description:
+            errors.append("Description is required.")
+        try:
+            hours = float(hours_raw)
+            if hours <= 0:
+                errors.append("Hours must be positive.")
+        except (ValueError, TypeError):
+            errors.append("Hours must be a number.")
+
+        if errors:
+            return jsonify({"error": " ".join(errors)}), 422
+
+        db.add_entry(date_str, customer, hours, description)
+        return jsonify({"success": True})
 
     @app.route("/customers/<path:name>/delete", methods=["POST"])
     def delete_customer(name):

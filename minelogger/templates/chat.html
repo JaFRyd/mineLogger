@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  #chat-input-area { display: flex; flex-direction: column; gap: 0.75rem; }
+  #input-row { display: flex; gap: 0.5rem; align-items: flex-start; }
+  #mic-btn {
+    flex-shrink: 0;
+    font-size: 1.3rem;
+    padding: 0.45rem 0.7rem;
+    line-height: 1;
+  }
+  #mic-btn.recording {
+    background: #c0392b;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+  }
+  #message { resize: vertical; min-height: 4rem; }
+  #status-msg { font-size: 0.85rem; color: #555; min-height: 1.2em; }
+  #preview-section { margin-top: 1.5rem; }
+  .field-missing input,
+  .field-missing textarea {
+    border-color: #e67e22;
+    background: #fff8f0;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  #error-banner {
+    display: none;
+    padding: 0.6rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    background: #f8d7da;
+    color: #721c24;
+  }
+  .action-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+</style>
+
+<div class="card">
+  <h2 style="margin-top:0">Chat Entry</h2>
+
+  <div id="error-banner"></div>
+
+  <div id="chat-input-area">
+    <div id="input-row">
+      <button id="mic-btn" class="btn" title="Start / stop voice input" style="display:none">🎙</button>
+      <textarea id="message" class="form-row" style="flex:1"
+        placeholder="Describe your work — e.g. "Spent 2.5 hours fixing the login bug for Acme today""></textarea>
+    </div>
+    <div class="action-row">
+      <button id="extract-btn" class="btn">Extract Fields</button>
+      <span id="status-msg"></span>
+    </div>
+  </div>
+
+  <div id="preview-section" style="display:none">
+    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e0e0e0;">
+    <h3 style="margin-top:0">Review &amp; Save</h3>
+
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-row" id="wrap-date">
+        <label for="f-date">Date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-row" id="wrap-hours">
+        <label for="f-hours">Hours</label>
+        <input type="number" id="f-hours" step="0.25" min="0.25">
+      </div>
+    </div>
+
+    <div class="form-row" id="wrap-customer" style="margin-bottom:1rem">
+      <label for="f-customer">Customer</label>
+      <input type="text" id="f-customer" list="customer-list" autocomplete="off">
+      <datalist id="customer-list">
+        {% for c in customers %}
+          <option value="{{ c }}">
+        {% endfor %}
+      </datalist>
+    </div>
+
+    <div class="form-row" id="wrap-description" style="margin-bottom:1.25rem">
+      <label for="f-description">Description</label>
+      <textarea id="f-description" rows="3"></textarea>
+    </div>
+
+    <div class="action-row">
+      <button id="save-btn" class="btn">Save Entry</button>
+      <button id="clear-btn" class="btn btn-danger">Clear</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Elements ── */
+  var micBtn      = document.getElementById('mic-btn');
+  var msgTA       = document.getElementById('message');
+  var extractBtn  = document.getElementById('extract-btn');
+  var statusMsg   = document.getElementById('status-msg');
+  var errorBanner = document.getElementById('error-banner');
+  var previewSec  = document.getElementById('preview-section');
+  var fDate       = document.getElementById('f-date');
+  var fHours      = document.getElementById('f-hours');
+  var fCustomer   = document.getElementById('f-customer');
+  var fDesc       = document.getElementById('f-description');
+  var saveBtn     = document.getElementById('save-btn');
+  var clearBtn    = document.getElementById('clear-btn');
+
+  /* ── Speech Recognition ── */
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recognition = null;
+  var recording = false;
+
+  if (SpeechRec) {
+    micBtn.style.display = 'inline-block';
+    recognition = new SpeechRec();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = function (e) {
+      var transcript = e.results[0][0].transcript;
+      msgTA.value = transcript;
+      stopRecording();
+      doExtract();
+    };
+
+    recognition.onerror = function (e) {
+      stopRecording();
+      showError('Speech recognition error: ' + e.error);
+    };
+
+    recognition.onend = function () {
+      if (recording) stopRecording();
+    };
+
+    micBtn.addEventListener('click', function () {
+      if (recording) {
+        recognition.stop();
+      } else {
+        startRecording();
+      }
+    });
+  }
+
+  function startRecording() {
+    recording = true;
+    micBtn.classList.add('recording');
+    micBtn.title = 'Stop recording';
+    recognition.start();
+    setStatus('Listening…');
+  }
+
+  function stopRecording() {
+    recording = false;
+    micBtn.classList.remove('recording');
+    micBtn.title = 'Start / stop voice input';
+    setStatus('');
+  }
+
+  /* ── Extraction ── */
+  extractBtn.addEventListener('click', doExtract);
+
+  msgTA.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      doExtract();
+    }
+  });
+
+  function doExtract() {
+    var msg = msgTA.value.trim();
+    if (!msg) { showError('Please enter or speak a message first.'); return; }
+
+    hideError();
+    setStatus('Extracting…');
+    extractBtn.disabled = true;
+
+    fetch('/chat/extract', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg})
+    })
+    .then(function (r) { return r.json().then(function (d) { return {ok: r.ok, data: d}; }); })
+    .then(function (res) {
+      extractBtn.disabled = false;
+      if (!res.ok) {
+        setStatus('');
+        showError(res.data.error || 'Extraction failed.');
+        return;
+      }
+      setStatus('Fields extracted.');
+      populatePreview(res.data);
+    })
+    .catch(function (err) {
+      extractBtn.disabled = false;
+      setStatus('');
+      showError('Network error: ' + err.message);
+    });
+  }
+
+  function populatePreview(data) {
+    fDate.value     = data.date        || '';
+    fHours.value    = data.hours       != null ? data.hours : '';
+    fCustomer.value = data.customer    || '';
+    fDesc.value     = data.description || '';
+    previewSec.style.display = 'block';
+    highlightMissing();
+  }
+
+  function highlightMissing() {
+    toggle('wrap-date',        !fDate.value);
+    toggle('wrap-hours',       !fHours.value);
+    toggle('wrap-customer',    !fCustomer.value);
+    toggle('wrap-description', !fDesc.value);
+  }
+
+  function toggle(id, missing) {
+    var el = document.getElementById(id);
+    if (missing) el.classList.add('field-missing');
+    else         el.classList.remove('field-missing');
+  }
+
+  [fDate, fHours, fCustomer, fDesc].forEach(function (el) {
+    el.addEventListener('input', highlightMissing);
+  });
+
+  /* ── Save ── */
+  saveBtn.addEventListener('click', function () {
+    hideError();
+    highlightMissing();
+
+    var payload = {
+      date:        fDate.value.trim(),
+      customer:    fCustomer.value.trim(),
+      hours:       parseFloat(fHours.value),
+      description: fDesc.value.trim()
+    };
+
+    saveBtn.disabled = true;
+
+    fetch('/chat/save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    })
+    .then(function (r) { return r.json().then(function (d) { return {ok: r.ok, data: d}; }); })
+    .then(function (res) {
+      saveBtn.disabled = false;
+      if (!res.ok) {
+        showError(res.data.error || 'Save failed.');
+        return;
+      }
+      /* success — reset everything and show confirmation */
+      doReset();
+      setStatus('Entry saved!');
+    })
+    .catch(function (err) {
+      saveBtn.disabled = false;
+      showError('Network error: ' + err.message);
+    });
+  });
+
+  /* ── Clear ── */
+  clearBtn.addEventListener('click', doReset);
+
+  function doReset() {
+    msgTA.value = '';
+    fDate.value = fHours.value = fCustomer.value = fDesc.value = '';
+    previewSec.style.display = 'none';
+    hideError();
+    ['wrap-date','wrap-hours','wrap-customer','wrap-description'].forEach(function (id) {
+      document.getElementById(id).classList.remove('field-missing');
+    });
+  }
+
+  /* ── Helpers ── */
+  function setStatus(msg) { statusMsg.textContent = msg; }
+
+  function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.style.display = 'block';
+  }
+
+  function hideError() {
+    errorBanner.style.display = 'none';
+    errorBanner.textContent   = '';
+  }
+}());
+</script>
+{% endblock %}
