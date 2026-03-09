@@ -29,6 +29,11 @@
       <label for="description">Description</label>
       <textarea id="description" name="description" rows="3" required>{{ entry.description }}</textarea>
     </div>
+    <div class="form-row" style="display:flex;align-items:center;gap:0.5rem">
+      <input type="checkbox" id="billable" name="billable" value="1"
+             {% if entry.billable %}checked{% endif %} style="width:auto;margin:0">
+      <label for="billable" style="margin:0;font-weight:600;font-size:0.85rem">Billable</label>
+    </div>
     <button type="submit" class="btn">Save Changes</button>
     <a href="{{ request.referrer or '/log' }}" class="btn"
        style="background:#888;margin-left:0.5rem">Cancel</a>

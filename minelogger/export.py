@@ -6,7 +6,7 @@ def generate_csv(entries):
     output = io.StringIO()
     writer = csv.DictWriter(
         output,
-        fieldnames=["date", "customer", "hours", "description", "created_at"],
+        fieldnames=["date", "customer", "hours", "description", "billable", "created_at"],
         extrasaction="ignore",
     )
     writer.writeheader()
@@ -40,11 +40,14 @@ def parse_csv(text):
             except (ValueError, TypeError):
                 errors.append(f"Row {i}: invalid hours value '{row.get('hours')}'.")
                 continue
+            billable_raw = row.get("billable", "1").strip()
+            billable = 1 if billable_raw not in ("0", "false", "no") else 0
             rows.append({
                 "date": date,
                 "customer": customer,
                 "hours": hours,
                 "description": description,
+                "billable": billable,
                 "created_at": row.get("created_at", "").strip(),
             })
     except Exception as e:

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0">Weekly Report</h2>
+
+  <!-- Filter bar -->
+  <form method="get" action="/report">
+    <div class="filter-bar">
+      <div class="form-row">
+        <label for="date_from">From</label>
+        <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+      </div>
+      <div class="form-row">
+        <label for="date_to">To</label>
+        <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+      </div>
+      <div class="form-row">
+        <label for="customer">Customer</label>
+        <select id="customer" name="customer" style="min-width:130px">
+          <option value="">All customers</option>
+          {% for c in customers %}
+            <option value="{{ c }}" {% if c == selected_customer %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="billable">Billable</label>
+        <select id="billable" name="billable" style="min-width:110px">
+          <option value="">All</option>
+          <option value="1" {% if selected_billable == "1" %}selected{% endif %}>Billable</option>
+          <option value="0" {% if selected_billable == "0" %}selected{% endif %}>Non-billable</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>&nbsp;</label>
+        <button type="submit" class="btn">Filter</button>
+      </div>
+      {% if date_from or date_to or selected_customer or selected_billable %}
+      <div class="form-row">
+        <label>&nbsp;</label>
+        <a href="/report" class="btn">Clear</a>
+      </div>
+      {% endif %}
+    </div>
+  </form>
+
+  {% if weeks %}
+  {% set ns = namespace(grand_total=0) %}
+  <div style="overflow-x:auto">
+  <table>
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th style="color:#888;font-weight:500">Dates</th>
+        <th style="text-align:right">Mon</th>
+        <th style="text-align:right">Tue</th>
+        <th style="text-align:right">Wed</th>
+        <th style="text-align:right">Thu</th>
+        <th style="text-align:right">Fri</th>
+        <th style="text-align:right">Sat</th>
+        <th style="text-align:right">Sun</th>
+        <th style="text-align:right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in weeks %}
+      {% set ns.grand_total = ns.grand_total + w.total %}
+      <tr>
+        <td style="white-space:nowrap;font-weight:600">{{ w.label }}</td>
+        <td style="white-space:nowrap;color:#888;font-size:0.85rem">{{ w.date_range }}</td>
+        {% for day in range(1, 8) %}
+        <td style="text-align:right;color:{% if w.days[day] > 0 %}#1a1a2e{% else %}#ccc{% endif %}">
+          {% if w.days[day] > 0 %}{{ "%.2f"|format(w.days[day]) }}{% else %}&ndash;{% endif %}
+        </td>
+        {% endfor %}
+        <td style="text-align:right;font-weight:600">{{ "%.2f"|format(w.total) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td>Grand Total</td>
+        <td colspan="8"></td>
+        <td style="text-align:right">{{ "%.2f"|format(ns.grand_total) }}</td>
+      </tr>
+    </tfoot>
+  </table>
+  </div>
+  {% else %}
+  <p style="color:#888">No entries found for the selected filters.</p>
+  {% endif %}
+</div>
+{% endblock %}

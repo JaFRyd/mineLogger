@@ -83,10 +83,18 @@
         </select>
       </div>
       <div class="form-row">
+        <label for="billable">Billable</label>
+        <select id="billable" name="billable" style="min-width:110px">
+          <option value="">All</option>
+          <option value="1" {% if selected_billable == "1" %}selected{% endif %}>Billable</option>
+          <option value="0" {% if selected_billable == "0" %}selected{% endif %}>Non-billable</option>
+        </select>
+      </div>
+      <div class="form-row">
         <label>&nbsp;</label>
         <button type="submit" class="btn">Filter</button>
       </div>
-      {% if date_from or date_to or selected_customer %}
+      {% if date_from or date_to or selected_customer or selected_billable %}
       <div class="form-row">
         <label>&nbsp;</label>
         <a href="/log{% if selected_month %}?month={{ selected_month }}{% endif %}" class="btn">Clear</a>
@@ -96,7 +104,14 @@
   </form>
 
   {% if entries %}
-  <table>
+  <table style="table-layout:fixed">
+    <colgroup>
+      <col style="width:100px">
+      <col style="width:160px">
+      <col style="width:70px">
+      <col>
+      <col style="width:110px">
+    </colgroup>
     <thead>
       <tr>
         <th>Date</th>
@@ -109,10 +124,18 @@
     <tbody>
       {% for e in entries %}
       <tr>
-        <td>{{ e.date }}</td>
-        <td>{{ e.customer }}</td>
+        <td style="white-space:nowrap">{{ e.date }}</td>
+        <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ e.customer }}">{{ e.customer }}</td>
         <td class="hours-col">{{ "%.2f"|format(e.hours) }}h</td>
-        <td>{{ e.description }}</td>
+        <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+            title="{{ e.description }}">
+          {% if e.billable %}
+            <span style="color:#27ae60;font-size:0.75rem;margin-right:0.3rem" title="Billable">●</span>
+          {% else %}
+            <span style="color:#aaa;font-size:0.75rem;margin-right:0.3rem" title="Non-billable">○</span>
+          {% endif %}
+          {{ e.description }}
+        </td>
         <td style="white-space:nowrap">
           <a href="/entry/{{ e.id }}/edit" class="btn btn-sm" style="margin-right:0.3rem">Edit</a>
           <form method="post" action="/entry/{{ e.id }}/delete" style="margin:0;display:inline"

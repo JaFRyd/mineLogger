@@ -44,7 +44,9 @@ def create_app():
                 for e in errors:
                     flash(e, "error")
             else:
-                db.add_entry(date_str, customer, hours, description)
+                billable = 1 if request.form.get("billable") else 0
+                db.add_entry(date_str, customer, hours, description, billable)
+                db.add_customer(customer)
                 flash("Entry added.", "success")
                 return redirect(url_for("add_entry"))
 
@@ -67,7 +69,9 @@ def create_app():
             last_day = calendar.monthrange(year, mon)[1]
             date_to = f"{year:04d}-{mon:02d}-{last_day:02d}"
 
-        entries = db.get_entries(date_from=date_from, date_to=date_to, customer=customer)
+        billable_filter = request.args.get("billable") or None
+        billable_int = int(billable_filter) if billable_filter in ("0", "1") else None
+        entries = db.get_entries(date_from=date_from, date_to=date_to, customer=customer, billable=billable_int)
         customers = db.get_customers()
         total = sum(e["hours"] for e in entries)
         months = db.get_months()
@@ -80,6 +84,7 @@ def create_app():
             date_from=date_from or "",
             date_to=date_to or "",
             selected_customer=customer or "",
+            selected_billable=billable_filter or "",
             active="log",
             months=months,
             selected_month=month or "",
@@ -188,7 +193,55 @@ def create_app():
             return jsonify({"error": " ".join(errors)}), 422
 
         db.add_entry(date_str, customer, hours, description)
+        db.add_customer(customer)
         return jsonify({"success": True})
+
+    @app.route("/settings")
+    def settings():
+        import sys
+        from pathlib import Path
+        port = request.host.split(":")[-1] if ":" in request.host else "5001"
+        db_path = str(Path.home() / ".minelogger" / "minelogger.db")
+        log_path = str(Path.home() / ".minelogger" / "minelogger-server.log")
+        return render_template("settings.html", active="settings",
+                               port=port, db_path=db_path, log_path=log_path)
+
+    @app.route("/settings/backup")
+    def backup_db():
+        from pathlib import Path
+        import shutil, io
+        db_path = Path.home() / ".minelogger" / "minelogger.db"
+        if not db_path.exists():
+            flash("Database file not found.", "error")
+            return redirect(url_for("settings"))
+        timestamp = date.today().strftime("%Y%m%d")
+        filename = f"minelogger-backup-{timestamp}.db"
+        data = io.BytesIO(db_path.read_bytes())
+        response = make_response(data.read())
+        response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+        response.headers["Content-Type"] = "application/octet-stream"
+        return response
+
+    @app.route("/settings/restart", methods=["POST"])
+    def restart_server():
+        import sys, os, subprocess, threading
+        def _restart():
+            import time
+            time.sleep(0.5)  # let the 204 response flush
+            if sys.platform == "win32":
+                # Launch a detached cmd that waits 2 s (for us to die + port to free)
+                # then starts a fresh server process.
+                subprocess.Popen(
+                    ["cmd", "/c", "timeout", "/t", "2", "/nobreak", "&"] +
+                    [sys.executable] + sys.argv,
+                    creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                    close_fds=True,
+                )
+                os._exit(0)  # kill current process immediately, freeing the port
+            else:
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+        threading.Thread(target=_restart, daemon=True).start()
+        return ("", 204)
 
     @app.route("/customers/<path:name>/delete", methods=["POST"])
     def delete_customer(name):
@@ -225,7 +278,8 @@ def create_app():
                     flash(e, "error")
                 customers = db.get_managed_customers()
                 return render_template("edit.html", entry=entry, customers=customers, active="log")
-            db.update_entry(entry_id, date_str, customer, hours, description)
+            billable = 1 if request.form.get("billable") else 0
+            db.update_entry(entry_id, date_str, customer, hours, description, billable)
             flash("Entry updated.", "success")
             referrer = request.form.get("referrer", "")
             return redirect(referrer if referrer else url_for("view_log"))
@@ -241,5 +295,20 @@ def create_app():
         if referrer:
             return redirect(referrer)
         return redirect(url_for("view_log"))
+
+    @app.route("/report")
+    def report():
+        date_from = request.args.get("date_from") or None
+        date_to   = request.args.get("date_to") or None
+        customer  = request.args.get("customer") or None
+        billable_filter = request.args.get("billable") or None
+        billable_int = int(billable_filter) if billable_filter in ("0", "1") else None
+        weeks     = db.get_weekly_report(date_from, date_to, customer, billable_int)
+        customers = db.get_customers()
+        return render_template("report.html", active="report",
+                               weeks=weeks, customers=customers,
+                               date_from=date_from or "", date_to=date_to or "",
+                               selected_customer=customer or "",
+                               selected_billable=billable_filter or "")
 
     return app

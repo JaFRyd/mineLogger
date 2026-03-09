@@ -90,8 +90,8 @@
     .btn-danger { background: #c0392b; }
     .btn-danger:hover { background: #a93226; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e0e0e0; font-size: 0.8rem; text-transform: uppercase; color: #666; }
-    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    th { text-align: left; padding: 0.35rem 0.75rem; border-bottom: 2px solid #e0e0e0; font-size: 0.8rem; text-transform: uppercase; color: #666; }
+    td { padding: 0.35rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
     tr:hover td { background: #fafafa; }
     .total-row td { font-weight: 600; border-top: 2px solid #e0e0e0; border-bottom: none; }
     .hours-col { white-space: nowrap; }
@@ -107,9 +107,11 @@
   <nav>
     <a href="/add" {% if active == 'add' %}class="active"{% endif %}>Add Entry</a>
     <a href="/log"  {% if active == 'log' %}class="active"{% endif %}>View Log</a>
+    <a href="/report" {% if active == 'report' %}class="active"{% endif %}>Report</a>
     <a href="/export" {% if active == 'export' %}class="active"{% endif %}>Export</a>
     <a href="/customers" {% if active == 'customers' %}class="active"{% endif %}>Customers</a>
     <a href="/chat" {% if active == 'chat' %}class="active"{% endif %}>Chat</a>
+    <a href="/settings" {% if active == 'settings' %}class="active"{% endif %}>Settings</a>
   </nav>
 </header>
 <main>

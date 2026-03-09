@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2 style="margin-top:0">Settings</h2>
+
+  <h3 style="margin-bottom:0.5rem;font-size:0.95rem;color:#444">Server info</h3>
+  <table style="margin-bottom:1.5rem;width:auto">
+    <tbody>
+      <tr>
+        <td style="padding:0.35rem 1rem 0.35rem 0;color:#666;font-size:0.875rem;border:none;white-space:nowrap">Port</td>
+        <td style="padding:0.35rem 0;font-size:0.875rem;border:none;font-family:monospace">{{ port }}</td>
+      </tr>
+      <tr>
+        <td style="padding:0.35rem 1rem 0.35rem 0;color:#666;font-size:0.875rem;border:none;white-space:nowrap">Database</td>
+        <td style="padding:0.35rem 0;font-size:0.875rem;border:none;font-family:monospace">{{ db_path }}</td>
+      </tr>
+      <tr>
+        <td style="padding:0.35rem 1rem 0.35rem 0;color:#666;font-size:0.875rem;border:none;white-space:nowrap">Server log</td>
+        <td style="padding:0.35rem 0;font-size:0.875rem;border:none;font-family:monospace">{{ log_path }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-bottom:0.5rem;font-size:0.95rem;color:#444">Database backup</h3>
+  <p style="margin-top:0;color:#555;font-size:0.9rem">
+    Download a copy of the database file. The filename includes today's date.
+  </p>
+  <a href="/settings/backup" class="btn">Download backup</a>
+
+  <hr style="border:none;border-top:1px solid #e8e8e8;margin:1.5rem 0">
+
+  <h3 style="margin-bottom:0.5rem;font-size:0.95rem;color:#444">Server</h3>
+  <p style="margin-top:0;color:#555;font-size:0.9rem">
+    Restart the server process in place. The page will reconnect automatically.
+  </p>
+  <button id="restartBtn" class="btn" onclick="restartServer()">Restart server</button>
+  <span id="restartStatus" style="margin-left:1rem;font-size:0.875rem;color:#555"></span>
+</div>
+
+<script>
+function restartServer() {
+  const btn    = document.getElementById('restartBtn');
+  const status = document.getElementById('restartStatus');
+  btn.disabled = true;
+  status.textContent = 'Restarting…';
+
+  fetch('/settings/restart', { method: 'POST' }).catch(() => {});
+
+  const start = Date.now();
+  const poll = setInterval(() => {
+    if (Date.now() - start > 15000) {
+      clearInterval(poll);
+      status.textContent = 'Timed out — server may not have restarted.';
+      btn.disabled = false;
+      return;
+    }
+    fetch('/settings', { cache: 'no-store' })
+      .then(r => { if (r.ok) { clearInterval(poll); window.location.reload(); } })
+      .catch(() => {});
+  }, 800);
+}
+</script>
+{% endblock %}
